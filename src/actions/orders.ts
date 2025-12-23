@@ -9,6 +9,8 @@ export async function createOrder(data: {
     items: { productId: string; quantity: number; price: number }[]
     cashReceived?: number
     changeGiven?: number
+    cashAmount?: number  // Para pagos mixtos
+    cardAmount?: number  // Para pagos mixtos
 }) {
     const total = data.items.reduce((acc, item) => acc + (item.price * item.quantity), 0)
 
@@ -24,6 +26,10 @@ export async function createOrder(data: {
                 cashReceived: data.cashReceived,
                 // @ts-ignore: Prisma client types not updated yet
                 changeGiven: data.changeGiven,
+                // @ts-ignore: Prisma client types not updated yet
+                cashAmount: data.cashAmount,
+                // @ts-ignore: Prisma client types not updated yet
+                cardAmount: data.cardAmount,
                 status: 'COMPLETED', // Auto-complete for now as per "Venta" flow
                 items: {
                     create: data.items.map(item => ({

@@ -42,6 +42,13 @@ export function OrderBuilder({ products, userId }: OrderBuilderProps) {
     const [cashAmount, setCashAmount] = useState('')
     const [change, setChange] = useState(0)
 
+    // Estado para pago mixto
+    const [isSplitPaymentOpen, setIsSplitPaymentOpen] = useState(false)
+    const [splitCashAmount, setSplitCashAmount] = useState('')
+    const [splitCashReceived, setSplitCashReceived] = useState('')
+    const [splitCardAmount, setSplitCardAmount] = useState(0)
+    const [splitChange, setSplitChange] = useState(0)
+
     const filteredProducts = products.filter(product =>
         product.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -96,7 +103,35 @@ export function OrderBuilder({ products, userId }: OrderBuilderProps) {
         setIsCashPaymentOpen(true)
     }
 
-    const handleSubmit = async (paymentMethod: string, cashDetails?: { received: number, change: number }) => {
+    const handleSplitPaymentClick = () => {
+        setSplitCashAmount('')
+        setSplitCashReceived('')
+        setSplitCardAmount(total)
+        setSplitChange(0)
+        setIsSplitPaymentOpen(true)
+    }
+
+    const handleSplitCashAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value
+        setSplitCashAmount(value)
+        const cashPart = parseFloat(value) || 0
+        const cardPart = total - cashPart
+        setSplitCardAmount(cardPart >= 0 ? cardPart : 0)
+    }
+
+    const handleSplitCashReceivedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value
+        setSplitCashReceived(value)
+        const received = parseFloat(value) || 0
+        const cashPart = parseFloat(splitCashAmount) || 0
+        setSplitChange(received - cashPart)
+    }
+
+    const handleSubmit = async (
+        paymentMethod: string,
+        cashDetails?: { received: number, change: number },
+        splitDetails?: { cashAmount: number, cardAmount: number, cashReceived?: number, change?: number }
+    ) => {
         if (cart.length === 0) return
 
         setLoading(true)
@@ -104,8 +139,10 @@ export function OrderBuilder({ products, userId }: OrderBuilderProps) {
             await createOrder({
                 userId,
                 paymentMethod,
-                cashReceived: cashDetails?.received,
-                changeGiven: cashDetails?.change,
+                cashReceived: cashDetails?.received || splitDetails?.cashReceived,
+                changeGiven: cashDetails?.change || splitDetails?.change,
+                cashAmount: splitDetails?.cashAmount,
+                cardAmount: splitDetails?.cardAmount,
                 items: cart.map((item) => ({
                     productId: item.product.id,
                     quantity: item.quantity,
@@ -114,9 +151,15 @@ export function OrderBuilder({ products, userId }: OrderBuilderProps) {
             })
             setCart([])
             setIsCashPaymentOpen(false)
+            setIsSplitPaymentOpen(false)
 
             let description = `Total: ${formatPrice(total)}`
-            if (cashDetails) {
+            if (splitDetails) {
+                description += ` | Efectivo: ${formatPrice(splitDetails.cashAmount)} | Tarjeta: ${formatPrice(splitDetails.cardAmount)}`
+                if (splitDetails.change && splitDetails.change > 0) {
+                    description += ` | Cambio: ${formatPrice(splitDetails.change)}`
+                }
+            } else if (cashDetails) {
                 description += ` | Cambio: ${formatPrice(cashDetails.change)}`
             } else {
                 description += ` - ${paymentMethod}`
@@ -229,25 +272,33 @@ export function OrderBuilder({ products, userId }: OrderBuilderProps) {
                             <span className="text-primary">{formatPrice(total)}</span>
                         </div>
 
-                        {/* Botones Principales Restaurados */}
-                        <div className="grid grid-cols-2 gap-3">
+                        {/* Botones Principales con Pago Mixto */}
+                        <div className="grid grid-cols-3 gap-2">
                             <Button
                                 size="lg"
-                                onClick={handleCashClick} // Abre el modal de efectivo
+                                onClick={handleCashClick}
                                 disabled={loading}
-                                className="w-full bg-green-600 hover:bg-green-700"
+                                className="w-full bg-green-600 hover:bg-green-700 text-sm"
                             >
-                                <Banknote className="w-5 h-5 mr-2" />
+                                <Banknote className="w-4 h-4 mr-1" />
                                 Efectivo
+                            </Button>
+                            <Button
+                                size="lg"
+                                onClick={handleSplitPaymentClick}
+                                disabled={loading}
+                                className="w-full bg-orange-600 hover:bg-orange-700 text-sm"
+                            >
+                                💰 Mixto
                             </Button>
                             <Button
                                 size="lg"
                                 onClick={() => handleSubmit('TARJETA')}
                                 disabled={loading}
-                                className="w-full bg-purple-600 hover:bg-purple-700"
+                                className="w-full bg-purple-600 hover:bg-purple-700 text-sm"
                             >
-                                <CreditCard className="w-5 h-5 mr-2" />
-                                Transferencia
+                                <CreditCard className="w-4 h-4 mr-1" />
+                                Tarjeta
                             </Button>
                         </div>
                     </div>
@@ -319,6 +370,108 @@ export function OrderBuilder({ products, userId }: OrderBuilderProps) {
                             Cancelar
                         </Button>
                     </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal de Pago Mixto */}
+            <Dialog open={isSplitPaymentOpen} onOpenChange={setIsSplitPaymentOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Pago Mixto (Efectivo + Tarjeta)</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="flex justify-between items-center text-lg font-semibold">
+                            <span>Total a Pagar:</span>
+                            <span className="text-primary">{formatPrice(total)}</span>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="split-cash-amount">Monto en Efectivo</Label>
+                            <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-bold">$</span>
+                                <Input
+                                    id="split-cash-amount"
+                                    type="number"
+                                    placeholder="0.00"
+                                    className="pl-8 text-lg"
+                                    value={splitCashAmount}
+                                    onChange={handleSplitCashAmountChange}
+                                    autoFocus
+                                />
+                            </div>
+                        </div>
+
+                        <div className="p-3 rounded-lg bg-purple-50 border border-purple-200">
+                            <div className="flex justify-between items-center">
+                                <span className="font-medium text-slate-700">Monto en Tarjeta:</span>
+                                <span className="text-xl font-bold text-purple-700">
+                                    {formatPrice(splitCardAmount)}
+                                </span>
+                            </div>
+                        </div>
+
+                        {parseFloat(splitCashAmount) > 0 && (
+                            <>
+                                <div className="space-y-2">
+                                    <Label htmlFor="split-cash-received">¿Cuánto entrega en efectivo?</Label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-bold">$</span>
+                                        <Input
+                                            id="split-cash-received"
+                                            type="number"
+                                            placeholder="Ingrese monto..."
+                                            className="pl-8 text-lg"
+                                            value={splitCashReceived}
+                                            onChange={handleSplitCashReceivedChange}
+                                        />
+                                    </div>
+                                </div>
+
+                                {parseFloat(splitCashReceived) > 0 && (
+                                    <div className={`p-4 rounded-lg border ${splitChange >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                                        <div className="flex justify-between items-center">
+                                            <span className="font-medium text-slate-700">Cambio a devolver:</span>
+                                            <span className={`text-2xl font-bold ${splitChange >= 0 ? 'text-green-700' : 'text-red-600'}`}>
+                                                {formatPrice(splitChange >= 0 ? splitChange : 0)}
+                                            </span>
+                                        </div>
+                                        {splitChange < 0 && (
+                                            <p className="text-xs text-red-500 mt-1 text-right">Faltan {formatPrice(Math.abs(splitChange))}</p>
+                                        )}
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+                    <DialogFooter className="flex flex-col gap-3">
+                        <Button
+                            onClick={() => {
+                                const cashPart = parseFloat(splitCashAmount) || 0
+                                const cardPart = splitCardAmount
+                                const received = parseFloat(splitCashReceived) || cashPart
+                                const change = received - cashPart
+
+                                handleSubmit('MIXTO', undefined, {
+                                    cashAmount: cashPart,
+                                    cardAmount: cardPart,
+                                    cashReceived: cashPart > 0 ? received : undefined,
+                                    change: cashPart > 0 && change > 0 ? change : undefined
+                                })
+                            }}
+                            disabled={
+                                loading ||
+                                parseFloat(splitCashAmount) < 0 ||
+                                splitCardAmount < 0 ||
+                                (parseFloat(splitCashAmount) > 0 && parseFloat(splitCashReceived) < parseFloat(splitCashAmount))
+                            }
+                            className="bg-orange-600 hover:bg-orange-700 text-white"
+                        >
+                            ✅ Confirmar Pago Mixto
+                        </Button>
+                        <Button variant="ghost" onClick={() => setIsSplitPaymentOpen(false)} className="w-full">
+                            Cancelar
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
