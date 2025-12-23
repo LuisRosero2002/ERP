@@ -1,7 +1,14 @@
-import { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcryptjs'
+import "dotenv/config";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient()
+const adapter = new PrismaPg({
+    connectionString: process.env.DATABASE_URL!,
+});
+
+const prisma = new PrismaClient({ adapter });
+
 
 async function main() {
     // Hash passwords
@@ -51,14 +58,7 @@ async function main() {
         update: {},
         create: {
             id: 'drinks-category',
-            name: 'Bebidas',
-            products: {
-                create: [
-                    { name: 'Coca Cola', price: 2.50, stock: 100 },
-                    { name: 'Agua Mineral', price: 1.50, stock: 50 },
-                    { name: 'Jugo de Naranja', price: 3.00, stock: 40 },
-                ],
-            },
+            name: 'Bebidas'
         },
     })
 
@@ -68,14 +68,6 @@ async function main() {
         create: {
             id: 'food-category',
             name: 'Comida',
-            products: {
-                create: [
-                    { name: 'Hamburguesa', price: 8.00, stock: 20 },
-                    { name: 'Papas Fritas', price: 3.50, stock: 30 },
-                    { name: 'Hot Dog', price: 5.00, stock: 25 },
-                    { name: 'Pizza Personal', price: 10.00, stock: 15 },
-                ],
-            },
         },
     })
 

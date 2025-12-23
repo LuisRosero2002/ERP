@@ -1,21 +1,16 @@
 import 'server-only';
 import { PrismaClient } from "@prisma/client";
-import { PrismaLibSql } from "@prisma/adapter-libsql";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
 const globalForPrisma = globalThis as unknown as {
     prisma: PrismaClient | undefined;
 };
 
-const url = process.env.DATABASE_URL || "file:./prisma/dev.db";
-// Adjust relative path for runtime execution from project root
-const connectionUrl = url.startsWith("file:./") && !url.includes("prisma/")
-    ? url.replace("file:./", "file:./prisma/")
-    : url;
+const connectionString = process.env.DATABASE_URL!;
 
-const adapter = new PrismaLibSql({
-    url: connectionUrl,
-    authToken: process.env.TURSO_AUTH_TOKEN,
-});
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
 
 export const prisma =
     globalForPrisma.prisma ??
