@@ -23,8 +23,8 @@ const productSchema = z.object({
     stock: z.number().int().min(0, 'El stock debe ser mayor o igual a 0'),
     categoryId: z.string().min(1, 'La categoría es requerida'),
     description: z.string().optional(),
-    isActive: z.boolean().default(true),
-    isCombo: z.boolean().default(false),
+    isActive: z.boolean(),
+    isCombo: z.boolean(),
     comboItems: z.array(z.object({
         productId: z.string(),
         quantity: z.number().min(1)
@@ -101,10 +101,8 @@ export function ProductForm({ product, categories, productsList = [], trigger, o
             }
 
             if (product) {
-                // @ts-ignore
                 await updateProduct(product.id, data)
             } else {
-                // @ts-ignore
                 await createProduct(data)
             }
             setOpen(false)
