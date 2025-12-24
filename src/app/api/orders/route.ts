@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+export const dynamic = "force-dynamic";
+
 
 export async function GET() {
     try {
@@ -21,6 +23,10 @@ export async function GET() {
             cashReceived: order.cashReceived ? Number(order.cashReceived) : null,
             // @ts-ignore: Prisma client generic types not yet updated
             changeGiven: order.changeGiven ? Number(order.changeGiven) : null,
+            // @ts-ignore: Prisma client generic types not yet updated
+            cashAmount: order.cashAmount ? Number(order.cashAmount) : null,
+            // @ts-ignore: Prisma client generic types not yet updated
+            cardAmount: order.cardAmount ? Number(order.cardAmount) : null,
             items: order.items.map(item => ({
                 ...item,
                 price: Number(item.price),

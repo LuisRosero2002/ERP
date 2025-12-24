@@ -104,6 +104,9 @@ export async function createOrder(data: {
         }
 
         return newOrder
+    }, {
+        maxWait: 10000, // 10 seconds max wait to acquire a connection
+        timeout: 15000, // 15 seconds max for the transaction to complete
     })
 
     revalidatePath('/sales')
@@ -117,6 +120,10 @@ export async function createOrder(data: {
         cashReceived: order.cashReceived ? Number(order.cashReceived) : null,
         // @ts-ignore: Prisma client types not updated yet
         changeGiven: order.changeGiven ? Number(order.changeGiven) : null,
+        // @ts-ignore: Prisma client types not updated yet
+        cashAmount: order.cashAmount ? Number(order.cashAmount) : null,
+        // @ts-ignore: Prisma client types not updated yet
+        cardAmount: order.cardAmount ? Number(order.cardAmount) : null,
     }
 }
 

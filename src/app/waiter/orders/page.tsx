@@ -31,6 +31,10 @@ export default async function WaiterOrdersPage() {
     const orders = ordersRaw.map(order => ({
         ...order,
         total: Number(order.total),
+        // @ts-ignore
+        cashAmount: order.cashAmount ? Number(order.cashAmount) : null,
+        // @ts-ignore
+        cardAmount: order.cardAmount ? Number(order.cardAmount) : null,
         items: order.items.map(item => ({
             ...item,
             price: Number(item.price),

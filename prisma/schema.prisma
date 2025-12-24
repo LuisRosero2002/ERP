@@ -86,8 +86,10 @@ model Category {
 model Order {
   id            String      @id @default(cuid())
   total         Decimal
-  cashReceived  Decimal? // Nuevo
-  changeGiven   Decimal? // Nuevo
+  cashReceived  Decimal? // For cash payments: amount received
+  changeGiven   Decimal? // For cash payments: change returned
+  cashAmount    Decimal? // For mixed payments: cash portion
+  cardAmount    Decimal? // For mixed payments: card portion
   status        String      @default("PENDING") // PENDING, COMPLETED, CANCELLED
   paymentMethod String?
   createdAt     DateTime    @default(now())

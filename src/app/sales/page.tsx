@@ -22,6 +22,8 @@ type Order = {
     paymentMethod: string
     cashReceived?: number | null
     changeGiven?: number | null
+    cashAmount?: number | null // For mixed payments
+    cardAmount?: number | null // For mixed payments
     createdAt: string
     updatedAt: string
     userId: string
@@ -111,13 +113,23 @@ export default function SalesPage() {
     // Cálculos de métricas
     const totalSales = orders.reduce((sum, order) => sum + order.total, 0)
 
-    const cashSales = orders
-        .filter(order => order.paymentMethod === 'EFECTIVO')
-        .reduce((sum, order) => sum + order.total, 0)
+    const cashSales = orders.reduce((sum, order) => {
+        if (order.paymentMethod === 'EFECTIVO') {
+            return sum + order.total
+        } else if (order.paymentMethod === 'MIXTO' && order.cashAmount) {
+            return sum + order.cashAmount
+        }
+        return sum
+    }, 0)
 
-    const cardTransferSales = orders
-        .filter(order => order.paymentMethod !== 'EFECTIVO')
-        .reduce((sum, order) => sum + order.total, 0)
+    const cardTransferSales = orders.reduce((sum, order) => {
+        if (order.paymentMethod === 'TARJETA') {
+            return sum + order.total
+        } else if (order.paymentMethod === 'MIXTO' && order.cardAmount) {
+            return sum + order.cardAmount
+        }
+        return sum
+    }, 0)
 
     const todayOrders = orders.filter(
         (order) =>

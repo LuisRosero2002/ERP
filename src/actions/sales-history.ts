@@ -39,12 +39,28 @@ export async function getSalesHistory(startDate: Date, endDate: Date) {
 
         // Calcular totales
         const totalSales = orders.reduce((sum, order) => sum + Number(order.total), 0)
-        const cashSales = orders
-            .filter(o => o.paymentMethod === 'EFECTIVO')
-            .reduce((sum, order) => sum + Number(order.total), 0)
-        const cardSales = orders
-            .filter(o => o.paymentMethod !== 'EFECTIVO')
-            .reduce((sum, order) => sum + Number(order.total), 0)
+
+        // Calcular ventas en efectivo (incluye pagos mixtos)
+        const cashSales = orders.reduce((sum, order) => {
+            if (order.paymentMethod === 'EFECTIVO') {
+                return sum + Number(order.total)
+            } else if (order.paymentMethod === 'MIXTO') {
+                // @ts-ignore: cashAmount exists in schema
+                return sum + (order.cashAmount ? Number(order.cashAmount) : 0)
+            }
+            return sum
+        }, 0)
+
+        // Calcular ventas en tarjeta/transferencia (incluye pagos mixtos)
+        const cardSales = orders.reduce((sum, order) => {
+            if (order.paymentMethod === 'TARJETA') {
+                return sum + Number(order.total)
+            } else if (order.paymentMethod === 'MIXTO') {
+                // @ts-ignore: cardAmount exists in schema
+                return sum + (order.cardAmount ? Number(order.cardAmount) : 0)
+            }
+            return sum
+        }, 0)
 
         // Serializar para el cliente
         const serializedOrders = orders.map(order => ({
@@ -53,6 +69,10 @@ export async function getSalesHistory(startDate: Date, endDate: Date) {
             paymentMethod: order.paymentMethod,
             cashReceived: order.cashReceived ? Number(order.cashReceived) : null,
             changeGiven: order.changeGiven ? Number(order.changeGiven) : null,
+            // @ts-ignore: cashAmount and cardAmount exist in schema
+            cashAmount: order.cashAmount ? Number(order.cashAmount) : null,
+            // @ts-ignore: cashAmount and cardAmount exist in schema
+            cardAmount: order.cardAmount ? Number(order.cardAmount) : null,
             createdAt: order.createdAt,
             waiterName: order.user.name,
             items: order.items.map(item => ({

@@ -443,7 +443,7 @@ export function OrderBuilder({ products, userId }: OrderBuilderProps) {
                             </>
                         )}
                     </div>
-                    <DialogFooter className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-3">
                         <Button
                             onClick={() => {
                                 const cashPart = parseFloat(splitCashAmount) || 0
@@ -471,7 +471,7 @@ export function OrderBuilder({ products, userId }: OrderBuilderProps) {
                         <Button variant="ghost" onClick={() => setIsSplitPaymentOpen(false)} className="w-full">
                             Cancelar
                         </Button>
-                    </DialogFooter>
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>
