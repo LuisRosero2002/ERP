@@ -26,7 +26,6 @@ export default async function DashboardPage() {
     )
 
     const lowStockProducts = products.filter(
-        // @ts-ignore
         (product) => product.stock <= product.minStock && !product.isCombo
     )
 

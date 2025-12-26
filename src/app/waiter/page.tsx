@@ -17,10 +17,8 @@ export default async function WaiterPage() {
         let stock = product.stock
 
         // Calculate effective stock for combos
-        // @ts-ignore
         if (product.isCombo && product.comboItems && product.comboItems.length > 0) {
-            // @ts-ignore
-            const maxPossible = product.comboItems.map(item => {
+            const maxPossible = product.comboItems.map((item: any) => {
                 const componentStock = item.product.stock
                 return Math.floor(componentStock / item.quantity)
             })

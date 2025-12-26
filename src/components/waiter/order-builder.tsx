@@ -200,7 +200,7 @@ export function OrderBuilder({ products, userId }: OrderBuilderProps) {
 
                 {filteredProducts.length === 0 ? (
                     <div className="text-center py-12 bg-white rounded-lg border border-dashed border-slate-300">
-                        <p className="text-slate-500">No se encontraron productos con "{searchTerm}"</p>
+                        <p className="text-slate-500">No se encontraron productos con &quot;{searchTerm}&quot;</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 gap-3">

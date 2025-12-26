@@ -22,13 +22,9 @@ export async function createOrder(data: {
                 userId: data.userId,
                 total,
                 paymentMethod: data.paymentMethod,
-                // @ts-ignore: Prisma client types not updated yet
                 cashReceived: data.cashReceived,
-                // @ts-ignore: Prisma client types not updated yet
                 changeGiven: data.changeGiven,
-                // @ts-ignore: Prisma client types not updated yet
                 cashAmount: data.cashAmount,
-                // @ts-ignore: Prisma client types not updated yet
                 cardAmount: data.cardAmount,
                 status: 'COMPLETED', // Auto-complete for now as per "Venta" flow
                 items: {
@@ -47,7 +43,6 @@ export async function createOrder(data: {
             const product = await tx.product.findUnique({
                 where: { id: item.productId },
                 include: {
-                    // @ts-ignore: Prisma client types
                     comboItems: true
                 }
             })
@@ -57,7 +52,6 @@ export async function createOrder(data: {
             // Define items to deduct stock from
             let itemsToDeduct = []
 
-            // @ts-ignore: Prisma client types
             if (product.isCombo && product.comboItems && product.comboItems.length > 0) {
                 // @ts-ignore: Prisma client types
                 itemsToDeduct = product.comboItems.map((comboItem: any) => ({
@@ -82,11 +76,9 @@ export async function createOrder(data: {
                 })
 
                 // Auto-deactivate if stock reached 0 or less (only for regular products/components)
-                // @ts-ignore
                 if (!updatedProduct.isCombo && updatedProduct.stock <= 0) {
                     await tx.product.update({
                         where: { id: deduction.productId },
-                        // @ts-ignore: Prisma client types not updated yet
                         data: { isActive: false }
                     })
                 }
@@ -116,13 +108,9 @@ export async function createOrder(data: {
     return {
         ...order,
         total: Number(order.total),
-        // @ts-ignore: Prisma client types not updated yet
         cashReceived: order.cashReceived ? Number(order.cashReceived) : null,
-        // @ts-ignore: Prisma client types not updated yet
         changeGiven: order.changeGiven ? Number(order.changeGiven) : null,
-        // @ts-ignore: Prisma client types not updated yet
         cashAmount: order.cashAmount ? Number(order.cashAmount) : null,
-        // @ts-ignore: Prisma client types not updated yet
         cardAmount: order.cardAmount ? Number(order.cardAmount) : null,
     }
 }
